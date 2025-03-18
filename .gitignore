@@ -1,0 +1,12 @@
+# Create or edit .gitignore
+echo "venv/" >> .gitignore
+echo "*.pyd" >> .gitignore
+echo "*.dll" >> .gitignore
+echo "*.exe" >> .gitignore
+echo "*.lib" >> .gitignore
+echo "__pycache__/" >> .gitignore
+echo "*.pyc" >> .gitignore
+
+# Add and commit the .gitignore file
+git add .gitignore
+git commit -m "Add .gitignore to exclude virtual environment and large binaries"
