@@ -1,14 +1,85 @@
-# Create or edit .gitignore
-echo "venv/" >> .gitignore
-echo "*.pyd" >> .gitignore
-echo "*.dll" >> .gitignore
-echo "*.exe" >> .gitignore
-echo "*.lib" >> .gitignore
-echo "__pycache__/" >> .gitignore
-echo "*.pyc" >> .gitignore
+# Python files
 __pycache__/
 outputs/*
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.venv/
+venv/
+ENV/
+env/
 
-# Add and commit the .gitignore file
-git add .gitignore
-git commit -m "Add .gitignore to exclude virtual environment and large binaries"
+# Next.js / Node.js files
+node_modules/
+.next/
+out/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.eslintcache
+.vercel
+.turbo
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Media files (likely to be large)
+uploads/
+outputs/youtube_ads/
+outputs/youtube_shorts/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.flv
+
+# Environment variables and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+
+# Generated files
+*.log
+logs/
+*.db
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
