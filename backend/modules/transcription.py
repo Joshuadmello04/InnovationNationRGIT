@@ -1,3 +1,4 @@
+#backend/modules/transcription.py
 import os
 import whisper
 from moviepy.video.io.VideoFileClip import VideoFileClip

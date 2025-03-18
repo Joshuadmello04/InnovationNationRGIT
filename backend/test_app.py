@@ -6,6 +6,43 @@ This will process a sample video and generate content for YouTube Shorts only.
 
 import os
 from InnovationNationRGIT.backend.enhanced_app import process_video
+import requests
+import json
+
+def update_job_status(job_id, status, progress=None, contents=None):
+    """
+    Updates job status in the database via API call.
+    
+    Parameters:
+    - job_id: The job ID to update
+    - status: New status (QUEUED, PROCESSING, COMPLETED, FAILED)
+    - progress: Progress percentage (0-100)
+    - contents: List of content items created
+    """
+    url = "http://localhost:3000/api/update-job"
+    
+    data = {
+        "jobId": job_id,
+        "status": status,
+        "progress": progress
+    }
+    
+    if contents:
+        data["contents"] = contents
+    
+    try:
+        response = requests.post(
+            url,
+            json=data,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response.status_code == 200:
+            print(f"Successfully updated job {job_id} status to {status}")
+        else:
+            print(f"Failed to update job status: {response.text}")
+    except Exception as e:
+        print(f"Error calling update job API: {e}")
 
 def run_test():
     # Path to your test video

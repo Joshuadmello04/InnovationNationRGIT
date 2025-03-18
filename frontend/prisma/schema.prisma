@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  jobs      Job[]
+
+  @@map("users")
+}
+
+model Job {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  originalVideoName String    @map("original_video_name")
+  originalVideoPath String    @map("original_video_path")
+  status            JobStatus @default(QUEUED)
+  progress          Int       @default(0)
+  error             String?
+  createdAt         DateTime  @default(now()) @map("created_at")
+  startedAt         DateTime? @map("started_at")
+  completedAt       DateTime? @map("completed_at")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contents          Content[]
+
+  @@map("jobs")
+}
+
+model Content {
+  id             String         @id @default(uuid())
+  jobId          String         @map("job_id")
+  platform       PlatformType
+  videoName      String         @map("video_name")
+  videoPath      String         @map("video_path")
+  thumbnailName  String         @map("thumbnail_name")
+  thumbnailPath  String         @map("thumbnail_path")
+  metadataPath   String?        @map("metadata_path")
+  duration       Float
+  startTimestamp Float          @map("start_timestamp")
+  endTimestamp   Float?         @map("end_timestamp")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  engagement     Int?           @default(0)
+  job            Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  creatives      CreativeText?
+  metrics        ContentMetric?
+
+  @@map("contents")
+}
+
+model CreativeText {
+  id          String   @id @default(uuid())
+  contentId   String   @unique @map("content_id")
+  headline    String?
+  description String?
+  callToAction String?  @map("call_to_action")
+  createdAt   DateTime @default(now()) @map("created_at")
+  content     Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("creative_texts")
+}
+
+model ContentMetric {
+  id                  String   @id @default(uuid())
+  contentId           String   @unique @map("content_id")
+  predictedEngagement Int      @default(0) @map("predicted_engagement")
+  engagementLevel     String   @map("engagement_level")
+  views               Int?
+  likes               Int?
+  shares              Int?
+  comments            Int?
+  clickThroughRate    Float?   @map("click_through_rate")
+  conversionRate      Float?   @map("conversion_rate")
+  lastUpdated         DateTime @default(now()) @map("last_updated")
+  content             Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("content_metrics")
+}
+
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum PlatformType {
+  YOUTUBE_SHORTS
+  YOUTUBE_ADS
+  DISPLAY_ADS
+  PERFORMANCE_MAX
+}
