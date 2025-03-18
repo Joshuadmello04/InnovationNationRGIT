@@ -6,6 +6,7 @@ echo "*.exe" >> .gitignore
 echo "*.lib" >> .gitignore
 echo "__pycache__/" >> .gitignore
 echo "*.pyc" >> .gitignore
+__pycache__/
 
 # Add and commit the .gitignore file
 git add .gitignore

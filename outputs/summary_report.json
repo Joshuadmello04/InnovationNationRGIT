@@ -1,0 +1,14 @@
+{
+  "input_video": "your_video.mp4",
+  "platforms_processed": [
+    "youtube_shorts"
+  ],
+  "created_content": {
+    "youtube_shorts": {
+      "video_file": "youtube_shorts_20250319_004735.mp4",
+      "thumbnail_file": "youtube_shorts_20250319_004743.jpg",
+      "predicted_engagement": 75,
+      "engagement_level": "High"
+    }
+  }
+}
