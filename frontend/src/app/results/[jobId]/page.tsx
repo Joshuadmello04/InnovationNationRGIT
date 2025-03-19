@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Download, Eye, Share2, Copy, Info, BarChart2, MessageSquare, Calendar } from 'lucide-react'
+import { ArrowLeft, Download, Eye, Share2, Copy, Info, BarChart2, Calendar } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 
 // Express server URL for serving videos
@@ -18,6 +18,14 @@ interface Creative {
   description: string;
   call_to_action?: string;
   callToAction?: string; // Support both naming conventions
+  video_snippets?: string[];
+}
+
+// Updated engagement prediction interface
+interface EngagementPrediction {
+  predicted_engagement: number;
+  engagement_level: string;
+  suggestions?: string[];
 }
 
 // Add transcript interface
@@ -32,21 +40,19 @@ interface Insights {
   high_impact_moments?: string[];
   audience_engagement_points?: string[];
   content_performance_predictions?: string[];
-  // Add any other insights fields here
 }
 
 interface ContentMetadata {
-  creatives: Creative | null;
-  engagement_prediction: {
-    predicted_engagement: number;
-    engagement_level: string;
-  } | null;
-  transcript?: Transcript;
-  insights?: Insights;
   platform?: string;
   timestamp?: number;
   duration?: number;
   aspect_ratio?: string;
+  video_file?: string;
+  thumbnail_file?: string;
+  creatives?: Creative;
+  engagement_prediction?: EngagementPrediction;
+  insights?: Insights;
+  job_id?: string;
 }
 
 interface Content {
@@ -57,7 +63,16 @@ interface Content {
   duration: number;
   startTimestamp: number;
   createdAt: string;
-  metadata: ContentMetadata;
+  metadata: {
+    creatives: Creative | null;
+    engagement_prediction: EngagementPrediction | null;
+    platform?: string;
+    timestamp?: number;
+    duration?: number;
+    aspect_ratio?: string;
+    insights?: Insights;
+    video_file?: string;
+  }
 }
 
 interface ResultsData {
@@ -74,8 +89,9 @@ interface ResultsData {
     email: string;
   } | null;
   results: Content[];
-  insights?: Insights; // Global insights for the entire job
-  transcript?: string; // Global transcript
+  insights?: Insights;
+  transcript?: string;
+  processingLog?: string;
 }
 
 // Function to extract filename from path
@@ -150,59 +166,64 @@ export default function ResultsPage({
   const [processingLog, setProcessingLog] = useState<string>('')
   const router = useRouter()
 
-  // Store the jobId in state to avoid direct access to params
-  const [jobId, setJobId] = useState<string>('')
-  
-  useEffect(() => {
-    setJobId(params.jobId)
-  }, [params])
-
   // Fetch results data
   useEffect(() => {
-    if (!jobId) return;
-
     const fetchResults = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`/api/results/${jobId}`)
+        const response = await fetch(`/api/results/${params.jobId}`)
         
         if (!response.ok) {
           throw new Error(`Failed to fetch results: ${response.status}`)
         }
 
         const data = await response.json()
-        console.log("Results data:", data);
         
-        // Also fetch processing logs if available
+        // Enhance results with additional metadata from JSON files
+        const enhancedResults = await Promise.all(data.results.map(async (content: Content) => {
+          try {
+            // Construct the metadata file URL
+            const metadataFilename = content.metadata.video_file?.replace('.mp4', '.json');
+            if (metadataFilename) {
+              const metadataResponse = await fetch(`${VIDEO_SERVER_URL}/videos/${params.jobId}/outputs/${content.platform}/${metadataFilename}`);
+              
+              if (metadataResponse.ok) {
+                const metadataFile = await metadataResponse.json();
+                
+                // Merge fetched metadata with existing metadata
+                return {
+                  ...content,
+                  metadata: {
+                    ...content.metadata,
+                    creatives: metadataFile.creatives || content.metadata.creatives,
+                    engagement_prediction: metadataFile.engagement_prediction || content.metadata.engagement_prediction,
+                    platform: metadataFile.platform || content.metadata.platform,
+                    timestamp: metadataFile.timestamp || content.metadata.timestamp,
+                    duration: metadataFile.duration || content.metadata.duration,
+                    aspect_ratio: metadataFile.aspect_ratio || content.metadata.aspect_ratio,
+                    insights: metadataFile.insights || content.metadata.insights
+                  }
+                };
+              }
+            }
+          } catch (metadataError) {
+            console.warn(`Could not fetch metadata for ${content.platform}:`, metadataError);
+          }
+          return content;
+        }));
+
+        // Update results with enhanced data
+        data.results = enhancedResults;
+        
+        // Fetch processing log
         try {
-          const logResponse = await fetch(`/api/logs/${jobId}`);
+          const logResponse = await fetch(`/api/logs/${params.jobId}`);
           if (logResponse.ok) {
             const logData = await logResponse.text();
             setProcessingLog(logData);
-            
-            // Parse insights from logs if they aren't in the results
-            if (!data.insights && logData) {
-              // Simple extraction of insights sections
-              const insightsMatch = logData.match(/Key Themes:([\s\S]*?)High-Impact Moments:([\s\S]*?)Audience Engagement Points:([\s\S]*?)Content Performance Predictions:([\s\S]*?)(?:\+|$)/);
-              
-              if (insightsMatch) {
-                data.insights = {
-                  key_themes: insightsMatch[1].trim().split(/\d+\.\s/).filter(Boolean).map(s => s.trim()),
-                  high_impact_moments: insightsMatch[2].trim().split(/\d+\.\s/).filter(Boolean).map(s => s.trim()),
-                  audience_engagement_points: insightsMatch[3].trim().split(/\d+\.\s/).filter(Boolean).map(s => s.trim()),
-                  content_performance_predictions: insightsMatch[4].trim().split(/\d+\.\s/).filter(Boolean).map(s => s.trim())
-                };
-              }
-              
-              // Extract transcript length
-              const transcriptMatch = logData.match(/Transcript length: (\d+) characters/);
-              if (transcriptMatch) {
-                data.transcript = transcriptMatch[1];
-              }
-            }
           }
-        } catch (logErr) {
-          console.warn('Could not fetch logs:', logErr);
+        } catch (logError) {
+          console.warn('Could not fetch processing log:', logError);
         }
         
         setResultsData(data)
@@ -215,7 +236,7 @@ export default function ResultsPage({
     }
 
     fetchResults()
-  }, [jobId])
+  }, [params.jobId])
 
   // Copy URL to clipboard
   const copyToClipboard = (url: string, type: string) => {
@@ -239,7 +260,7 @@ export default function ResultsPage({
   // Debug function - get list of files for job
   const checkFilesOnServer = async () => {
     try {
-      const response = await fetch(`${VIDEO_SERVER_URL}/list/${jobId}`);
+      const response = await fetch(`${VIDEO_SERVER_URL}/list/${params.jobId}`);
       const data = await response.json();
       console.log('Files available on server:', data);
       alert('Check console for file list');
@@ -345,8 +366,8 @@ export default function ResultsPage({
               </div>
             </div>
             
-            {/* Global insights and transcript section */}
-            {(resultsData.insights || resultsData.transcript) && (
+            {/* Global insights and processing log section */}
+            {(resultsData.insights || processingLog) && (
               <div className="mt-8">
                 <Accordion type="single" collapsible className="w-full">
                   {resultsData.insights && (
@@ -372,7 +393,8 @@ export default function ResultsPage({
                           
                           {resultsData.insights.high_impact_moments && (
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-700 mb-2">High-Impact Moments</h4>
+                              <h4 className="text-sm font-semibold text-gray-700 mb-2">High-Impact Moments
+                              </h4>
                               <ul className="list-disc pl-5 space-y-1">
                                 {resultsData.insights.high_impact_moments.map((moment, i) => (
                                   <li key={i} className="text-sm text-gray-800">{moment}</li>
@@ -403,29 +425,6 @@ export default function ResultsPage({
                             </div>
                           )}
                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  )}
-                  
-                  {resultsData.transcript && (
-                    <AccordionItem value="transcript">
-                      <AccordionTrigger className="text-blue-600 hover:text-blue-800 font-medium">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare size={16} />
-                          Video Transcript
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="bg-white p-4 rounded-md border border-gray-100 mt-2">
-                        {parseInt(resultsData.transcript) > 0 ? (
-                          <div className="text-sm text-gray-800">
-                            <p>Transcript available ({resultsData.transcript} characters)</p>
-                            {/* Ideally, you'd display the actual transcript here if available */}
-                          </div>
-                        ) : (
-                          <div className="text-sm text-gray-500 italic">
-                            No transcript was generated for this video.
-                          </div>
-                        )}
                       </AccordionContent>
                     </AccordionItem>
                   )}
@@ -479,8 +478,8 @@ export default function ResultsPage({
             const thumbnailFilename = content ? getFilenameFromPath(content.thumbnailPath) : null;
             
             // Build direct URLs to Express server
-            const videoUrl = videoFilename ? buildVideoUrl(jobId, platform, videoFilename) : null;
-            const thumbnailUrl = thumbnailFilename ? buildVideoUrl(jobId, platform, thumbnailFilename) : null;
+            const videoUrl = videoFilename ? buildVideoUrl(params.jobId, platform, videoFilename) : null;
+            const thumbnailUrl = thumbnailFilename ? buildVideoUrl(params.jobId, platform, thumbnailFilename) : null;
             
             console.log(`[${platform}] Video URL:`, videoUrl);
             console.log(`[${platform}] Thumbnail URL:`, thumbnailUrl);
@@ -639,6 +638,19 @@ export default function ResultsPage({
                                         </p>
                                       </div>
                                     )}
+
+                                    {content.metadata.creatives.video_snippets && (
+                                      <div>
+                                        <p className="text-xs font-medium text-gray-500 mb-1">Key Video Snippets</p>
+                                        <ul className="list-disc pl-5 space-y-1">
+                                          {content.metadata.creatives.video_snippets.map((snippet, i) => (
+                                            <li key={i} className="text-sm bg-gray-50 p-2 rounded text-gray-800">
+                                              {snippet}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
                                   </div>
                                 </AccordionContent>
                               </AccordionItem>
@@ -686,19 +698,28 @@ export default function ResultsPage({
                                       <span className={`font-medium ${
                                         content.metadata.engagement_prediction.engagement_level === 'High'
                                           ? 'text-green-600'
-                                          : content.metadata.engagement_prediction.engagement_level === 'Medium'
-                                          ? 'text-yellow-600'
+                                          : content.metadata.engagement_prediction.engagement_level === 'Medium'? 'text-yellow-600'
                                           : 'text-blue-600'
                                       }`}>
                                         {content.metadata.engagement_prediction.engagement_level}
                                       </span> engagement level
                                     </p>
+
+                                    {content.metadata.engagement_prediction.suggestions && (
+                                      <div className="mt-4">
+                                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Improvement Suggestions</h4>
+                                        <ul className="list-disc pl-5 space-y-1">
+                                          {content.metadata.engagement_prediction.suggestions.map((suggestion, i) => (
+                                            <li key={i} className="text-sm text-gray-800">{suggestion}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
                                   </div>
                                 </AccordionContent>
                               </AccordionItem>
                             )}
                             
-                            {/* Metadata Section */}
                             {/* Metadata Section */}
                             <AccordionItem value="metadata" className="border border-gray-200 rounded-lg overflow-hidden">
                               <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 border-b border-gray-200">
@@ -773,6 +794,28 @@ export default function ResultsPage({
                                         <ul className="list-disc pl-5 space-y-1">
                                           {content.metadata.insights.high_impact_moments.map((moment, i) => (
                                             <li key={i} className="text-sm text-gray-800">{moment}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    
+                                    {content.metadata.insights.audience_engagement_points && (
+                                      <div>
+                                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Audience Engagement Points</h4>
+                                        <ul className="list-disc pl-5 space-y-1">
+                                          {content.metadata.insights.audience_engagement_points.map((point, i) => (
+                                            <li key={i} className="text-sm text-gray-800">{point}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    
+                                    {content.metadata.insights.content_performance_predictions && (
+                                      <div>
+                                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Content Performance Predictions</h4>
+                                        <ul className="list-disc pl-5 space-y-1">
+                                          {content.metadata.insights.content_performance_predictions.map((prediction, i) => (
+                                            <li key={i} className="text-sm text-gray-800">{prediction}</li>
                                           ))}
                                         </ul>
                                       </div>

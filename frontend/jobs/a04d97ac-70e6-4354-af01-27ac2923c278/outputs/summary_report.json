@@ -1,0 +1,15 @@
+{
+  "input_video": "defense_0025.avi",
+  "platforms_processed": [
+    "youtube_shorts"
+  ],
+  "job_id": "a04d97ac-70e6-4354-af01-27ac2923c278",
+  "created_content": {
+    "youtube_shorts": {
+      "video_file": "youtube_shorts_20250319_091902.mp4",
+      "thumbnail_file": "youtube_shorts_20250319_091908.jpg",
+      "predicted_engagement": 75,
+      "engagement_level": "High"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "input_video": "sociopath.mp4",
+  "platforms_processed": [
+    "youtube_shorts"
+  ],
+  "job_id": "f73773af-3256-43b0-85bd-4fd3651423e9",
+  "created_content": {
+    "youtube_shorts": {
+      "video_file": "youtube_shorts_20250319_093038.mp4",
+      "thumbnail_file": "youtube_shorts_20250319_093112.jpg",
+      "predicted_engagement": 75,
+      "engagement_level": "High"
+    }
+  }
+}

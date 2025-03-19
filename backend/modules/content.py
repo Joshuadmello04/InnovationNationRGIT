@@ -380,7 +380,7 @@ def add_text_overlay_with_images(video_path, text_data):
             
             headline_filter = f"drawtext=text='{headline}':fontcolor=white:fontsize=24:box=1:boxcolor=black@0.8:x=20:y=30"
         
-        # Process CTA text
+        # Process CTA text - MODIFIED: Now positioned at the top below headline
         cta_filter = None
         if 'cta' in text_data and text_data['cta']:
             cta = text_data['cta']
@@ -393,7 +393,8 @@ def add_text_overlay_with_images(video_path, text_data):
             cta = cta.replace("'", "'\\''").replace(":", "\\:").replace(",", "\\,")
             print(f"Adding CTA text: '{cta}'")
             
-            cta_filter = f"drawtext=text='{cta}':fontcolor=white:fontsize=20:box=1:boxcolor=black@0.8:x=20:y=h-60"
+            # Changed y-position to place CTA at the top (70px from top)
+            cta_filter = f"drawtext=text='{cta}':fontcolor=white:fontsize=20:box=1:boxcolor=black@0.8:x=20:y=70"
         
         # Apply filters in sequence if both are present
         if headline_filter and cta_filter:
@@ -1271,15 +1272,16 @@ def create_ad_video(video_path, start_time, duration, output_path, ad_format, ad
     
     return output_path
 
-def generate_thumbnail(video_path, timestamp, output_path, add_text=None):
+def generate_thumbnail(video_path, timestamp, output_path, headline=None, font_path=None):
     """
-    Generates a thumbnail from a video frame, formatted for vertical display.
+    Generates a thumbnail from a video frame, formatted for vertical display with optional headline overlay.
     
     Parameters:
     - video_path: Path to the source video
     - timestamp: Timestamp in seconds to extract frame
     - output_path: Path to save the thumbnail
-    - add_text: Optional text to overlay
+    - headline: Optional headline text to overlay
+    - font_path: Optional path to a custom font file (TTF)
     
     Returns:
     - output_path: Path to the created thumbnail
@@ -1356,95 +1358,153 @@ def generate_thumbnail(video_path, timestamp, output_path, add_text=None):
     if width > target_width:  # Only crop if needed
         image = image.crop((left, 0, right, height))
     
-    # Add text using the same approach as video overlays for consistency
-    if add_text and isinstance(add_text, dict):
+    # Add headline text if provided
+    if headline:
         try:
-            # Try to find a common font
-            try:
-                for font_name in ["Arial", "Helvetica", "DejaVuSans", "FreeSans", "Liberation Sans"]:
-                    try:
-                        font_paths = [
-                            f"{font_name}",
-                            f"/usr/share/fonts/truetype/{font_name}.ttf",
-                            f"/Library/Fonts/{font_name}.ttf",
-                            f"C:\\Windows\\Fonts\\{font_name}.ttf"
-                        ]
-                        
-                        headline_font = None
-                        cta_font = None
-                        
-                        # Try each potential path
-                        for path in font_paths:
-                            try:
-                                headline_font = ImageFont.truetype(path, 24)
-                                cta_font = ImageFont.truetype(path, 20)
+            # Try to find a suitable font
+            font_size = int(height * 0.08)  # 8% of the image height
+            headline_font = None
+            cta_font = None
+            
+            if font_path and os.path.exists(font_path):
+                try:
+                    headline_font = ImageFont.truetype(font_path, font_size)
+                    cta_font = ImageFont.truetype(font_path, int(font_size * 0.8))
+                except Exception as e:
+                    print(f"Could not load custom font: {e}")
+            
+            # If custom font failed or wasn't provided, try common system fonts
+            if not headline_font:
+                try:
+                    for font_name in ["Arial", "Helvetica", "DejaVuSans", "FreeSans", "Liberation Sans"]:
+                        try:
+                            font_paths = [
+                                f"{font_name}",
+                                f"/usr/share/fonts/truetype/{font_name}.ttf",
+                                f"/Library/Fonts/{font_name}.ttf",
+                                f"C:\\Windows\\Fonts\\{font_name.lower()}.ttf"
+                            ]
+                            
+                            # Try each potential path
+                            for path in font_paths:
+                                try:
+                                    headline_font = ImageFont.truetype(path, font_size)
+                                    cta_font = ImageFont.truetype(path, int(font_size * 0.8))
+                                    if headline_font:
+                                        break
+                                except:
+                                    continue
+                            
+                            if headline_font:
                                 break
-                            except:
-                                continue
-                        
-                        if headline_font and cta_font:
-                            break
-                    except:
-                        continue
-                
-                # If we still don't have fonts, use default
-                if not headline_font:
-                    headline_font = ImageFont.load_default()
-                    cta_font = ImageFont.load_default()
-            except:
-                # Fallback to default font
+                        except:
+                            continue
+                except:
+                    pass
+            
+            # Fallback to default font if still not found
+            if not headline_font:
                 headline_font = ImageFont.load_default()
                 cta_font = ImageFont.load_default()
             
+            # Create a drawing context
             draw = ImageDraw.Draw(image)
             
-            # Add headline at the top
-            if 'headline' in add_text and add_text['headline']:
-                headline = add_text['headline']
-                
-                # Get text dimensions
-                try:
-                    text_bbox = draw.textbbox((0, 0), headline, font=headline_font)
-                    text_width = text_bbox[2] - text_bbox[0]
-                    text_height = text_bbox[3] - text_bbox[1]
-                except AttributeError:
-                    text_width, text_height = draw.textsize(headline, font=headline_font)
-                
-                text_x = (image.width - text_width) // 2
-                text_y = 20
-                
-                # Draw background rectangle
-                draw.rectangle(
-                    (0, text_y, image.width, text_y + text_height + 10), 
-                    fill=(0, 0, 0, 180)
-                )
-                # Draw text
-                draw.text((text_x, text_y + 5), headline, fill=(255, 255, 255), font=headline_font)
+            # Create a gradient overlay at the top for the headline
+            gradient_height = int(image.height * 0.25)  # 25% of the image height
             
-            # Add CTA at the bottom
-            if 'cta' in add_text and add_text['cta']:
-                cta = add_text['cta']
+            # Create a separate image for the gradient overlay
+            overlay = Image.new('RGBA', image.size, (0, 0, 0, 0))
+            overlay_draw = ImageDraw.Draw(overlay)
+            
+            # Draw gradient from top
+            for y in range(gradient_height):
+                alpha = int(180 * (1 - y / gradient_height))  # Fade from 180 to 0
+                overlay_draw.rectangle([(0, y), (image.width, y)], fill=(0, 0, 0, alpha))
+            
+            # Convert overlay to RGB and blend with original image
+            if image.mode == 'RGB':
+                # Create a new image with alpha transparency
+                temp = Image.new('RGBA', image.size)
+                temp.paste(image.convert('RGBA'), (0, 0))
+                # Paste overlay with alpha
+                temp = Image.alpha_composite(temp, overlay)
+                # Convert back to RGB
+                image = temp.convert('RGB')
+            else:
+                # Direct alpha composite if the image already has transparency
+                image = Image.alpha_composite(image.convert('RGBA'), overlay)
+                image = image.convert('RGB')
+            
+            # Calculate text size and position
+            draw = ImageDraw.Draw(image)
+            max_width = image.width * 0.9  # 90% of the image width
+            
+            # Handle long headlines: split into multiple lines if needed
+            words = headline.split()
+            lines = []
+            current_line = words[0]
+            
+            for word in words[1:]:
+                test_line = current_line + " " + word
                 
-                # Get text dimensions
+                # Get text width (handle different PIL versions)
                 try:
-                    text_bbox = draw.textbbox((0, 0), cta, font=cta_font)
+                    text_bbox = draw.textbbox((0, 0), test_line, font=headline_font)
                     text_width = text_bbox[2] - text_bbox[0]
-                    text_height = text_bbox[3] - text_bbox[1]
                 except AttributeError:
-                    text_width, text_height = draw.textsize(cta, font=cta_font)
+                    text_width, _ = draw.textsize(test_line, font=headline_font)
                 
-                text_x = (image.width - text_width) // 2
-                text_y = image.height - text_height - 30
+                if text_width <= max_width:
+                    current_line = test_line
+                else:
+                    lines.append(current_line)
+                    current_line = word
+            
+            # Add the last line
+            lines.append(current_line)
+            
+            # Draw each line of text for headline
+            y_position = image.height * 0.05  # Start at 5% from the top
+            line_height = font_size * 1.2
+            
+            for line in lines:
+                # Get text dimensions (handle different PIL versions)
+                try:
+                    text_bbox = draw.textbbox((0, 0), line, font=headline_font)
+                    text_width = text_bbox[2] - text_bbox[0]
+                except AttributeError:
+                    text_width, _ = draw.textsize(line, font=headline_font)
                 
-                # Draw background rectangle
-                draw.rectangle(
-                    (0, text_y, image.width, text_y + text_height + 10), 
-                    fill=(0, 0, 0, 180)
-                )
-                # Draw text
-                draw.text((text_x, text_y + 5), cta, fill=(255, 255, 255), font=cta_font)
+                x_position = (image.width - text_width) / 2  # Center horizontally
+                
+                # Draw text shadow for better visibility
+                draw.text((x_position+2, y_position+2), line, font=headline_font, fill=(0, 0, 0))
+                draw.text((x_position, y_position), line, font=headline_font, fill=(255, 255, 255))
+                
+                y_position += line_height
+            
+            # Get call-to-action text from metadata if available
+            # We'll use a dictionary to get the call to action
+            if isinstance(headline, dict) and 'call_to_action' in headline:
+                cta_text = headline['call_to_action']
+                
+                # Draw CTA right below the headline
+                try:
+                    text_bbox = draw.textbbox((0, 0), cta_text, font=cta_font)
+                    text_width = text_bbox[2] - text_bbox[0]
+                except AttributeError:
+                    text_width, _ = draw.textsize(cta_text, font=cta_font)
+                
+                x_position = (image.width - text_width) / 2  # Center horizontally
+                
+                # Draw CTA text with shadow, right below the headline
+                draw.text((x_position+2, y_position+2), cta_text, font=cta_font, fill=(0, 0, 0))
+                draw.text((x_position, y_position), cta_text, font=cta_font, fill=(255, 255, 255))
+            
         except Exception as e:
-            print(f"Could not add text to thumbnail: {e}")
+            print(f"Could not add headline to thumbnail: {e}")
+            import traceback
             print(traceback.format_exc())
     
     # Save the thumbnail

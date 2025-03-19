@@ -1,0 +1,26 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 5.1,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_093038.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_093112.jpg",
+  "creatives": {
+    "headline": "Discover Social Media Insights with Project Sociopath - YouTube Shorts",
+    "description": "Our AI-powered tool, Project Sociopath, uses social media data and Google's generative embeddings to provide insights. Upload a CSV file, import it into our Start API, and search for relevant sources using a chat input. Our tool passes the context and question to Google Jmini, which generates output based on the data. Check out our video overview and learn which user is best among three types of users on specific platforms. Try it out today!",
+    "call_to_action": "Try Project Sociopath now! ",
+    "video_snippets": [
+      "See how our tool uses Instagram data to provide insights, such as the number of posts and post types.",
+      "Learn which platform is best for social media analytics based on likes, shares, comments, and post distribution."
+    ]
+  },
+  "job_id": "f73773af-3256-43b0-85bd-4fd3651423e9",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": [
+      "Consider shortening your headline for better impact",
+      "Shorter CTAs typically drive better conversion rates"
+    ]
+  }
+}

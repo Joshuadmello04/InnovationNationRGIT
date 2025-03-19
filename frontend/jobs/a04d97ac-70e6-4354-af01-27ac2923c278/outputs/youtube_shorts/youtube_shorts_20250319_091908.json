@@ -1,0 +1,25 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 0.0,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_091902.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_091908.jpg",
+  "creatives": {
+    "headline": "Revolutionize Your Experience: Discover Bucky's Time-Traveling Adventures!",
+    "description": "Experience the thrill of time travel as Bucky journeys through history. Witness historic moments and uncover hidden secrets. Join Bucky's adventures now on YouTube Shorts.",
+    "call_to_action": "Watch Now",
+    "video_snippets": [
+      "Bucky blasts off into the past!",
+      "Unleash the power of time travel with Bucky!"
+    ]
+  },
+  "job_id": "a04d97ac-70e6-4354-af01-27ac2923c278",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": [
+      "Consider shortening your headline for better impact"
+    ]
+  }
+}

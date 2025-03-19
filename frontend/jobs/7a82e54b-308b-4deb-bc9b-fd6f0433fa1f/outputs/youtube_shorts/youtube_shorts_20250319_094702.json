@@ -1,0 +1,25 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 10.377033333333333,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_094642.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_094702.jpg",
+  "creatives": {
+    "headline": "Uncover the Truth: Cambodia's Deadly Revolution",
+    "description": "Discover the shocking truth behind one of the most brutal revolutions in history. As Cambodia fell to communism, 25% of its population was systematically executed or worked to death. Learn about the enigmatic leader Pol Pot and his vision for a new dark age that wiped away individuality and basic human rights. Don't miss this eye-opening video.",
+    "call_to_action": "Join us in shedding light on this tragic chapter of history. Share this video with your friends and family to spread awareness about the atrocities committed by Pol Pot and the Khmer Rouge.",
+    "video_snippets": [
+      "Pol Pot's rise to power and the chaos that ensued after Cambodia's independence",
+      "The horrors of Paul Pot's concentration camps and the mass executions that took place in them"
+    ]
+  },
+  "job_id": "7a82e54b-308b-4deb-bc9b-fd6f0433fa1f",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": [
+      "Shorter CTAs typically drive better conversion rates"
+    ]
+  }
+}

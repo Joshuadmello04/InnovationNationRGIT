@@ -52,7 +52,7 @@ PLATFORM_SETTINGS = {
     }
 }
 
-def process_video(video_path, platforms=None, job_id=None, output_dir=None):
+def process_video(video_path, platforms=None, job_id=None, output_dir=None, font_path=None):
     """
     Process a video to create content for different platforms.
     
@@ -61,6 +61,7 @@ def process_video(video_path, platforms=None, job_id=None, output_dir=None):
     - platforms: List of platforms to generate content for (default: all platforms)
     - job_id: Optional job identifier
     - output_dir: Optional custom output directory
+    - font_path: Optional path to a custom font for thumbnails
     
     Returns:
     - Dictionary with results for each platform
@@ -150,10 +151,18 @@ def process_video(video_path, platforms=None, job_id=None, output_dir=None):
                 ad_text=ad_creatives
             )
         
-        # Generate a thumbnail
+        # Generate a thumbnail with headline overlay
         thumbnail_filename = generate_output_filename(platform, "jpg")
         thumbnail_path = os.path.join(output_dir, thumbnail_filename)
-        generate_thumbnail(video_path, timestamp, thumbnail_path)
+        
+        # Pass both headline and call to action to the thumbnail generator
+        # We'll modify the function to accept a dictionary with both values
+        generate_thumbnail(
+            video_path, 
+            timestamp, 
+            thumbnail_path, 
+            headline=ad_creatives
+        )
         
         # Create metadata
         metadata = {
