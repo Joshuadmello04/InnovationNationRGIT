@@ -1,144 +1,166 @@
-'use client'
+"use client"
 
-import React, { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { Job } from '@/types'
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import Header from "@/components/layout/Header"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { ArrowLeft, AlertCircle, Loader2, CheckCircle, Clock } from "lucide-react"
 
-// Spinner component for loading state
-const Spinner = () => (
-  <div className="flex justify-center items-center">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
-  </div>
-)
+// Improved ProcessingStatus component
+function ProcessingStatus({ status, progress }: { status: string; progress: number }) {
+  return (
+    <Card className="w-full border shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-xl flex items-center gap-2">
+          {status === "PROCESSING" && <Loader2 className="h-5 w-5 text-primary animate-spin" />}
+          {status === "COMPLETED" && <CheckCircle className="h-5 w-5 text-green-500" />}
+          {status === "FAILED" && <AlertCircle className="h-5 w-5 text-destructive" />}
+          {status === "QUEUED" && <Clock className="h-5 w-5 text-amber-500" />}
+          Processing Status
+        </CardTitle>
+        <CardDescription>
+          {status === "PROCESSING"
+            ? "Your video is being processed"
+            : status === "COMPLETED"
+              ? "Processing complete!"
+              : status === "FAILED"
+                ? "Processing failed"
+                : "Waiting to start processing"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Progress</span>
+            <span className="font-medium">{progress}%</span>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
 
-// Progress Bar Component
-const ProgressBar = ({ progress }: { progress: number }) => (
-  <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-    <div 
-      className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-in-out" 
-      style={{ width: `${progress}%` }}
-    ></div>
-  </div>
-)
+        <div className="flex items-center justify-center">
+          {status === "PROCESSING" && (
+            <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-2 rounded-full">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm font-medium">Processing in progress</span>
+            </div>
+          )}
+          {status === "COMPLETED" && (
+            <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-full">
+              <CheckCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">Processing complete</span>
+            </div>
+          )}
+          {status === "FAILED" && (
+            <div className="flex items-center gap-2 text-destructive bg-destructive/10 px-3 py-2 rounded-full">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">Processing failed</span>
+            </div>
+          )}
+          {status === "QUEUED" && (
+            <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-2 rounded-full">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-medium">Waiting in queue</span>
+            </div>
+          )}
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-center border-t pt-6">
+        <p className="text-sm text-center text-muted-foreground max-w-md">
+          {status === "PROCESSING"
+            ? "This may take a few minutes depending on the length and complexity of your video. Please don't close this window."
+            : status === "COMPLETED"
+              ? "Your video has been successfully processed and is ready to view."
+              : status === "FAILED"
+                ? "There was an issue processing your video. Please try again or contact support."
+                : "Your video is in the processing queue and will begin shortly."}
+        </p>
+      </CardFooter>
+    </Card>
+  )
+}
 
-export default function ProcessingPage({ 
-  params 
-}: { 
-  params: { jobId: string } 
-}) {
-  const [job, setJob] = useState<Job | null>(null)
+export default function ProcessingPage({ params }: { params: { jobId: string } }) {
+  const [status, setStatus] = useState("PROCESSING")
+  const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  
-  // Handle the jobId safely using useState to store the value
-  const [jobId, setJobId] = useState<string>('')
-  
-  // Set the jobId once when the component mounts
+  const { jobId } = params
+
   useEffect(() => {
-    setJobId(params.jobId)
-  }, [params])
+    // Poll for job status updates
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`/api/jobs/${jobId}`)
 
-  // Fetch job status
-  const fetchJobStatus = useCallback(async () => {
-    if (!jobId) return; // Don't fetch if jobId isn't set yet
-    
-    try {
-      const response = await fetch(`/api/jobs/${jobId}`)
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch job status')
+        if (!response.ok) {
+          throw new Error("Failed to fetch job status")
+        }
+
+        const data = await response.json()
+
+        setStatus(data.job.status)
+        setProgress(data.job.progress)
+
+        // Redirect to results page when job is completed
+        if (data.job.status === "COMPLETED") {
+          router.push(`/results/${jobId}`)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred")
       }
-
-      const data = await response.json()
-      setJob(data)
-
-      // Redirect to results if job is completed
-      if (data.status === 'COMPLETED') {
-        router.push(`/results/${jobId}`)
-        return
-      }
-
-      // Redirect to error page if job failed
-      if (data.status === 'FAILED') {
-        router.push(`/error/${jobId}`)
-        return
-      }
-    } catch (err) {
-      console.error('Error fetching job status:', err)
-      setError(err instanceof Error ? err.message : 'An unknown error occurred')
     }
+
+    // First check
+    checkStatus()
+
+    // Set up polling
+    const intervalId = setInterval(checkStatus, 5000)
+
+    // Clean up interval
+    return () => clearInterval(intervalId)
   }, [jobId, router])
 
-  // Set up periodic status checking
-  useEffect(() => {
-    if (!jobId) return; // Skip if jobId isn't set
-    
-    // Initial fetch
-    fetchJobStatus()
-
-    // Set up interval to check job status every 5 seconds
-    const intervalId = setInterval(fetchJobStatus, 5000)
-
-    // Clean up interval on component unmount
-    return () => clearInterval(intervalId)
-  }, [fetchJobStatus, jobId])
-
-  // Error state
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-red-50 p-4">
-        <h1 className="text-2xl font-bold text-red-600 mb-4">Processing Error</h1>
-        <p className="text-red-500 mb-4">{error}</p>
-        <button 
-          onClick={() => router.push('/')} 
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-        >
-          Return to Upload
-        </button>
-      </div>
-    )
-  }
-
-  // Loading state
-  if (!job) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-        <Spinner />
-        <p className="mt-4 text-gray-600">Initializing job...</p>
-      </div>
-    )
-  }
-
-  // Main processing view
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white shadow-md rounded-lg p-6">
-        <h1 className="text-2xl font-bold mb-4 text-center">Processing Video</h1>
-        
-        <div className="mb-4">
-          <p className="text-gray-600 mb-2">
-            Processing: <span className="font-semibold">{job.originalVideoName}</span>
-          </p>
-          <ProgressBar progress={job.progress || 0} />
-          <p className="text-sm text-gray-500 mt-2 text-center">
-            {job.progress || 0}% Complete
-          </p>
+    <div className="min-h-screen bg-background">
+      <Header />
+
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-primary">Processing Your Video</h1>
+          <p className="mt-2 text-muted-foreground">Please wait while we analyze and convert your video.</p>
         </div>
 
-        <div className="mt-4 text-center">
-          <p className="text-gray-700">
-            Status: <span className="font-semibold capitalize">
-              {job.status ? job.status.toLowerCase() : 'Unknown'}
-            </span>
-          </p>
-        </div>
+        {error ? (
+          <Alert variant="destructive" className="mb-8">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              {error}
+              <div className="mt-4">
+                <Button variant="outline" onClick={() => router.push("/dashboard")} className="flex items-center gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Return to Dashboard
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <div className="animate-in fade-in-50 duration-300">
+            <ProcessingStatus status={status} progress={progress} />
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">
-            Please do not close this window. Your video is being processed.
-          </p>
-        </div>
-      </div>
+            <div className="mt-8 flex justify-center">
+              <Button variant="outline" onClick={() => router.push("/dashboard")} className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   )
 }
+
