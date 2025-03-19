@@ -1,0 +1,23 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 0.0,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_085557.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_085600.jpg",
+  "creatives": {
+    "headline": "Transform Your Home with Our Smart Devices",
+    "description": "Upgrade your living space with our innovative smart home technology. Control everything from your phone and enjoy a smarter, more convenient life. Shop now! #SmartHome #Innovation",
+    "call_to_action": "Shop Now",
+    "video_snippets": [
+      "See how easy it is to set up our smart thermostat in just seconds! ",
+      "Discover the endless possibilities of our smart lighting system. Transform your space with a tap!"
+    ]
+  },
+  "job_id": "6eb1588d-728b-47ca-9b33-8aa2ca2a5762",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": []
+  }
+}

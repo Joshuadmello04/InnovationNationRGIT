@@ -1,0 +1,23 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 3.8401378839590445,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_085126.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_085136.jpg",
+  "creatives": {
+    "headline": "Join Our EC2 Setup Journey",
+    "description": "Watch as we navigate through the process of setting up EC2 instances on AWS. Don't miss out on this informative Youtube Shorts!",
+    "call_to_action": "Watch Now",
+    "video_snippets": [
+      "Let's go Mark let's go finally. Recording screenshots for our laptops.",
+      "Mark that's only 50% of the work. Now we have to do EC2."
+    ]
+  },
+  "job_id": "fb700879-5fe5-40ca-8a62-642e70bf83af",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": []
+  }
+}

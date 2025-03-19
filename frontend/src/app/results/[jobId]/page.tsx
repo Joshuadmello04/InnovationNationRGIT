@@ -6,15 +6,33 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Download, Eye, Share2, Copy } from 'lucide-react'
+import { ArrowLeft, Download, Eye, Share2, Copy, Info, BarChart2, MessageSquare, Calendar } from 'lucide-react'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 
 // Express server URL for serving videos
 const VIDEO_SERVER_URL = 'http://localhost:3002';
 
+// More comprehensive interface for creatives
 interface Creative {
   headline: string;
   description: string;
-  callToAction: string;
+  call_to_action?: string;
+  callToAction?: string; // Support both naming conventions
+}
+
+// Add transcript interface
+interface Transcript {
+  text: string;
+  length: number;
+}
+
+// Add insights interface
+interface Insights {
+  key_themes?: string[];
+  high_impact_moments?: string[];
+  audience_engagement_points?: string[];
+  content_performance_predictions?: string[];
+  // Add any other insights fields here
 }
 
 interface ContentMetadata {
@@ -23,6 +41,12 @@ interface ContentMetadata {
     predicted_engagement: number;
     engagement_level: string;
   } | null;
+  transcript?: Transcript;
+  insights?: Insights;
+  platform?: string;
+  timestamp?: number;
+  duration?: number;
+  aspect_ratio?: string;
 }
 
 interface Content {
@@ -50,6 +74,8 @@ interface ResultsData {
     email: string;
   } | null;
   results: Content[];
+  insights?: Insights; // Global insights for the entire job
+  transcript?: string; // Global transcript
 }
 
 // Function to extract filename from path
@@ -65,6 +91,53 @@ function buildVideoUrl(jobId: string, platform: string, filename: string | null)
   return `${VIDEO_SERVER_URL}/videos/${jobId}/outputs/${platform}/${filename}`;
 }
 
+// Function to format text content for display
+function formatContent(content: string | undefined): React.ReactNode {
+  if (!content) return <p className="text-gray-500 italic">No content available</p>;
+  
+  // Split by numeric markers like "1. Something"
+  const parts = content.split(/(\d+\.\s)/g);
+  
+  if (parts.length <= 1) {
+    // No numeric markers found, return as is
+    return <p className="text-sm text-gray-800">{content}</p>;
+  }
+
+  const elements: React.ReactNode[] = [];
+  let currentListItem = '';
+  let inList = false;
+  
+  parts.forEach((part, index) => {
+    if (part.match(/^\d+\.\s$/)) {
+      // This is a numeric marker
+      if (inList && currentListItem) {
+        elements.push(<li key={`item-${index-1}`} className="ml-4 mb-2">{currentListItem}</li>);
+      } else if (!inList) {
+        inList = true;
+        elements.push(<ul key={`list-${index}`} className="list-disc pl-5 py-2 space-y-1"></ul>);
+      }
+      currentListItem = part;
+    } else if (inList) {
+      // Continuation of a list item
+      currentListItem += part;
+      elements.push(<li key={`item-${index}`} className="ml-4 mb-2">{currentListItem}</li>);
+      currentListItem = '';
+    } else {
+      // Regular text
+      if (part.trim()) {
+        elements.push(<p key={`text-${index}`} className="text-sm text-gray-800 mb-2">{part}</p>);
+      }
+    }
+  });
+  
+  // Add any remaining list item
+  if (inList && currentListItem) {
+    elements.push(<li key="item-final" className="ml-4 mb-2">{currentListItem}</li>);
+  }
+  
+  return <div className="space-y-1">{elements}</div>;
+}
+
 export default function ResultsPage({ 
   params 
 }: { 
@@ -74,6 +147,7 @@ export default function ResultsPage({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [processingLog, setProcessingLog] = useState<string>('')
   const router = useRouter()
 
   // Store the jobId in state to avoid direct access to params
@@ -98,6 +172,39 @@ export default function ResultsPage({
 
         const data = await response.json()
         console.log("Results data:", data);
+        
+        // Also fetch processing logs if available
+        try {
+          const logResponse = await fetch(`/api/logs/${jobId}`);
+          if (logResponse.ok) {
+            const logData = await logResponse.text();
+            setProcessingLog(logData);
+            
+            // Parse insights from logs if they aren't in the results
+            if (!data.insights && logData) {
+              // Simple extraction of insights sections
+              const insightsMatch = logData.match(/Key Themes:([\s\S]*?)High-Impact Moments:([\s\S]*?)Audience Engagement Points:([\s\S]*?)Content Performance Predictions:([\s\S]*?)(?:\+|$)/);
+              
+              if (insightsMatch) {
+                data.insights = {
+                  key_themes: insightsMatch[1].trim().split(/\d+\.\s/).filter(Boolean).map(s => s.trim()),
+                  high_impact_moments: insightsMatch[2].trim().split(/\d+\.\s/).filter(Boolean).map(s => s.trim()),
+                  audience_engagement_points: insightsMatch[3].trim().split(/\d+\.\s/).filter(Boolean).map(s => s.trim()),
+                  content_performance_predictions: insightsMatch[4].trim().split(/\d+\.\s/).filter(Boolean).map(s => s.trim())
+                };
+              }
+              
+              // Extract transcript length
+              const transcriptMatch = logData.match(/Transcript length: (\d+) characters/);
+              if (transcriptMatch) {
+                data.transcript = transcriptMatch[1];
+              }
+            }
+          }
+        } catch (logErr) {
+          console.warn('Could not fetch logs:', logErr);
+        }
+        
         setResultsData(data)
       } catch (err) {
         console.error('Error fetching results:', err)
@@ -237,6 +344,108 @@ export default function ResultsPage({
                 <p className="text-gray-800">{formatDate(resultsData.job.completedAt)}</p>
               </div>
             </div>
+            
+            {/* Global insights and transcript section */}
+            {(resultsData.insights || resultsData.transcript) && (
+              <div className="mt-8">
+                <Accordion type="single" collapsible className="w-full">
+                  {resultsData.insights && (
+                    <AccordionItem value="insights">
+                      <AccordionTrigger className="text-blue-600 hover:text-blue-800 font-medium">
+                        <div className="flex items-center gap-2">
+                          <BarChart2 size={16} />
+                          Content Insights
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="bg-white p-4 rounded-md border border-gray-100 mt-2">
+                        <div className="space-y-4">
+                          {resultsData.insights.key_themes && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-700 mb-2">Key Themes</h4>
+                              <ul className="list-disc pl-5 space-y-1">
+                                {resultsData.insights.key_themes.map((theme, i) => (
+                                  <li key={i} className="text-sm text-gray-800">{theme}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {resultsData.insights.high_impact_moments && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-700 mb-2">High-Impact Moments</h4>
+                              <ul className="list-disc pl-5 space-y-1">
+                                {resultsData.insights.high_impact_moments.map((moment, i) => (
+                                  <li key={i} className="text-sm text-gray-800">{moment}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {resultsData.insights.audience_engagement_points && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-700 mb-2">Audience Engagement Points</h4>
+                              <ul className="list-disc pl-5 space-y-1">
+                                {resultsData.insights.audience_engagement_points.map((point, i) => (
+                                  <li key={i} className="text-sm text-gray-800">{point}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {resultsData.insights.content_performance_predictions && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-700 mb-2">Content Performance Predictions</h4>
+                              <ul className="list-disc pl-5 space-y-1">
+                                {resultsData.insights.content_performance_predictions.map((prediction, i) => (
+                                  <li key={i} className="text-sm text-gray-800">{prediction}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+                  
+                  {resultsData.transcript && (
+                    <AccordionItem value="transcript">
+                      <AccordionTrigger className="text-blue-600 hover:text-blue-800 font-medium">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare size={16} />
+                          Video Transcript
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="bg-white p-4 rounded-md border border-gray-100 mt-2">
+                        {parseInt(resultsData.transcript) > 0 ? (
+                          <div className="text-sm text-gray-800">
+                            <p>Transcript available ({resultsData.transcript} characters)</p>
+                            {/* Ideally, you'd display the actual transcript here if available */}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-500 italic">
+                            No transcript was generated for this video.
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+                  
+                  <AccordionItem value="processing-log">
+                    <AccordionTrigger className="text-blue-600 hover:text-blue-800 font-medium">
+                      <div className="flex items-center gap-2">
+                        <Info size={16} />
+                        Processing Log
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="bg-white rounded-md border border-gray-100 mt-2">
+                      <div className="max-h-96 overflow-auto p-4">
+                        <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">{processingLog || 'No processing log available'}</pre>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -304,10 +513,20 @@ export default function ResultsPage({
                     <CardContent className="p-6">
                       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                         <div className="lg:col-span-3">
-                          <h3 className="text-lg font-medium mb-4 text-gray-800 flex items-center gap-2">
-                            <Eye size={18} />
-                            Video Preview
-                          </h3>
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium text-gray-800 flex items-center gap-2">
+                              <Eye size={18} />
+                              Video Preview
+                            </h3>
+                            
+                            {content.metadata.timestamp && (
+                              <Badge variant="outline" className="flex items-center gap-1">
+                                <Calendar size={12} />
+                                <span>Timestamp: {content.metadata.timestamp.toFixed(2)}s</span>
+                              </Badge>
+                            )}
+                          </div>
+                          
                           <div className="bg-black rounded-lg overflow-hidden mb-6 shadow-md">
                             {videoUrl ? (
                               <video 
@@ -315,15 +534,30 @@ export default function ResultsPage({
                                 controls 
                                 className="w-full h-full"
                                 poster={thumbnailUrl || undefined}
-                                style={{ aspectRatio: platform === 'youtube_shorts' ? '9/16' : '16/9' }}
+                                style={{ aspectRatio: platform === 'youtube_shorts' ? '9/16' : platform === 'display_ads' ? '1/1' : '16/9' }}
                               />
                             ) : (
                               <div className="flex items-center justify-center bg-gray-800 text-white p-8" 
-                                   style={{ aspectRatio: platform === 'youtube_shorts' ? '9/16' : '16/9' }}>
+                                   style={{ aspectRatio: platform === 'youtube_shorts' ? '9/16' : platform === 'display_ads' ? '1/1' : '16/9' }}>
                                 Video not available
                               </div>
                             )}
                           </div>
+                          
+                          {/* Thumbnail preview */}
+                          {thumbnailUrl && (
+                            <div className="mb-6">
+                              <h3 className="text-sm font-medium text-gray-700 mb-2">Thumbnail</h3>
+                              <div className="bg-black rounded-lg overflow-hidden shadow-sm border border-gray-200">
+                                <img 
+                                  src={thumbnailUrl} 
+                                  alt="Video thumbnail" 
+                                  className="w-full h-auto"
+                                />
+                              </div>
+                            </div>
+                          )}
+                          
                           <div className="flex flex-wrap gap-3">
                             {videoUrl && (
                               <Button 
@@ -366,96 +600,188 @@ export default function ResultsPage({
                               </Button>
                             )}
                           </div>
-                          
-                          {/* Debug info */}
-                          <div className="mt-6 p-3 bg-gray-100 border border-gray-200 rounded text-xs font-mono">
-                            <div className="font-bold mb-1">Debug Info:</div>
-                            <div className="mb-1">Job ID: {jobId}</div>
-                            <div className="mb-1">Platform: {platform}</div>
-                            <div className="mb-1">Original Video Path: {content.videoPath}</div>
-                            <div className="mb-1">Video Filename: {videoFilename}</div>
-                            <div className="mb-1">Express Video URL: {videoUrl}</div>
-                          </div>
                         </div>
                         
                         <div className="lg:col-span-2">
-                          <h3 className="text-lg font-medium mb-4 text-gray-800">Content Details</h3>
-                          
-                          {content.metadata.creatives && (
-                            <div className="mb-6 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                              <h4 className="text-sm font-medium text-gray-700 mb-3 pb-2 border-b border-gray-100">
-                                Ad Creatives
-                              </h4>
-                              <div className="space-y-4">
-                                <div>
-                                  <p className="text-xs font-medium text-gray-500 mb-1">Headline</p>
-                                  <p className="text-sm bg-gray-50 p-2 rounded text-gray-800">
-                                    {content.metadata.creatives.headline}
-                                  </p>
+                          <Accordion type="multiple" defaultValue={['creatives', 'engagement']} className="space-y-4">
+                            {/* Ad Creatives Section */}
+                            {content.metadata.creatives && (
+                              <AccordionItem value="creatives" className="border border-gray-200 rounded-lg overflow-hidden">
+                                <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 border-b border-gray-200">
+                                  <div className="flex items-center gap-2 text-gray-800 font-medium">
+                                    <Info size={16} />
+                                    Ad Creatives
+                                  </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="p-4 bg-white">
+                                  <div className="space-y-4">
+                                    <div>
+                                      <p className="text-xs font-medium text-gray-500 mb-1">Headline</p>
+                                      <p className="text-sm bg-gray-50 p-2 rounded text-gray-800">
+                                        {content.metadata.creatives.headline}
+                                      </p>
+                                    </div>
+                                    
+                                    {(content.metadata.creatives.description) && (
+                                      <div>
+                                        <p className="text-xs font-medium text-gray-500 mb-1">Description</p>
+                                        <p className="text-sm bg-gray-50 p-2 rounded text-gray-800">
+                                          {content.metadata.creatives.description}
+                                        </p>
+                                      </div>
+                                    )}
+                                    
+                                    {(content.metadata.creatives.call_to_action || content.metadata.creatives.callToAction) && (
+                                      <div>
+                                        <p className="text-xs font-medium text-gray-500 mb-1">Call to Action</p>
+                                        <p className="text-sm bg-gray-50 p-2 rounded text-gray-800">
+                                          {content.metadata.creatives.call_to_action || content.metadata.creatives.callToAction}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            )}
+                            
+                            {/* Engagement Prediction Section */}
+                            {content.metadata.engagement_prediction && (
+                              <AccordionItem value="engagement" className="border border-gray-200 rounded-lg overflow-hidden">
+                                <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 border-b border-gray-200">
+                                  <div className="flex items-center gap-2 text-gray-800 font-medium">
+                                    <BarChart2 size={16} />
+                                    Engagement Prediction
+                                  </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="p-4 bg-white">
+                                  <div className="px-4 py-3 bg-gray-50 rounded-lg">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <span className="text-sm text-gray-600">Predicted Score</span>
+                                      <span className="font-bold text-gray-800">
+                                        {content.metadata.engagement_prediction.predicted_engagement.toFixed(1)}
+                                      </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
+                                      <div 
+                                        className={`h-2.5 rounded-full ${
+                                          content.metadata.engagement_prediction.engagement_level === 'High'
+                                            ? 'bg-green-500'
+                                            : content.metadata.engagement_prediction.engagement_level === 'Medium'
+                                            ? 'bg-yellow-500'
+                                            : 'bg-blue-500'
+                                        }`}
+                                        style={{ 
+                                          width: `${Math.min(100, content.metadata.engagement_prediction.predicted_engagement)}%` 
+                                        }}
+                                      ></div>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                      <span>0</span>
+                                      <span>25</span>
+                                      <span>50</span>
+                                      <span>75</span>
+                                      <span>100</span>
+                                    </div>
+                                    <p className="mt-3 text-sm text-center text-gray-700">
+                                      <span className={`font-medium ${
+                                        content.metadata.engagement_prediction.engagement_level === 'High'
+                                          ? 'text-green-600'
+                                          : content.metadata.engagement_prediction.engagement_level === 'Medium'
+                                          ? 'text-yellow-600'
+                                          : 'text-blue-600'
+                                      }`}>
+                                        {content.metadata.engagement_prediction.engagement_level}
+                                      </span> engagement level
+                                    </p>
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            )}
+                            
+                            {/* Metadata Section */}
+                            {/* Metadata Section */}
+                            <AccordionItem value="metadata" className="border border-gray-200 rounded-lg overflow-hidden">
+                              <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 border-b border-gray-200">
+                                <div className="flex items-center gap-2 text-gray-800 font-medium">
+                                  <Info size={16} />
+                                  Technical Details
                                 </div>
-                                <div>
-                                  <p className="text-xs font-medium text-gray-500 mb-1">Description</p>
-                                  <p className="text-sm bg-gray-50 p-2 rounded text-gray-800">
-                                    {content.metadata.creatives.description || "No description available"}
-                                  </p>
+                              </AccordionTrigger>
+                              <AccordionContent className="p-4 bg-white">
+                                <div className="space-y-3">
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Format</span>
+                                    <span className="font-medium text-gray-800 capitalize">{platformName}</span>
+                                  </div>
+                                  
+                                  {content.metadata.aspect_ratio && (
+                                    <div className="flex justify-between text-sm">
+                                      <span className="text-gray-600">Aspect Ratio</span>
+                                      <span className="font-medium text-gray-800">{content.metadata.aspect_ratio}</span>
+                                    </div>
+                                  )}
+                                  
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Duration</span>
+                                    <span className="font-medium text-gray-800">
+                                      {content.metadata.duration || content.duration}s
+                                    </span>
+                                  </div>
+                                  
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Video</span>
+                                    <span className="font-medium text-gray-800 font-mono text-xs truncate max-w-[180px]">
+                                      {videoFilename || 'N/A'}
+                                    </span>
+                                  </div>
+                                  
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Thumbnail</span>
+                                    <span className="font-medium text-gray-800 font-mono text-xs truncate max-w-[180px]">
+                                      {thumbnailFilename || 'N/A'}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-xs font-medium text-gray-500 mb-1">Call to Action</p>
-                                  <p className="text-sm bg-gray-50 p-2 rounded text-gray-800">
-                                    {content.metadata.creatives.callToAction}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {content.metadata.engagement_prediction && (
-                            <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                              <h4 className="text-sm font-medium text-gray-700 mb-3 pb-2 border-b border-gray-100">
-                                Engagement Prediction
-                              </h4>
-                              <div className="px-4 py-3 bg-gray-50 rounded-lg">
-                                <div className="flex justify-between items-center mb-2">
-                                  <span className="text-sm text-gray-600">Predicted Score</span>
-                                  <span className="font-bold text-gray-800">
-                                    {content.metadata.engagement_prediction.predicted_engagement.toFixed(1)}
-                                  </span>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
-                                  <div 
-                                    className={`h-2.5 rounded-full ${
-                                      content.metadata.engagement_prediction.engagement_level === 'High'
-                                        ? 'bg-green-500'
-                                        : content.metadata.engagement_prediction.engagement_level === 'Medium'
-                                        ? 'bg-yellow-500'
-                                        : 'bg-blue-500'
-                                    }`}
-                                    style={{ 
-                                      width: `${Math.min(100, content.metadata.engagement_prediction.predicted_engagement)}%` 
-                                    }}
-                                  ></div>
-                                </div>
-                                <div className="flex justify-between text-xs text-gray-500">
-                                  <span>0</span>
-                                  <span>25</span>
-                                  <span>50</span>
-                                  <span>75</span>
-                                  <span>100</span>
-                                </div>
-                                <p className="mt-3 text-sm text-center text-gray-700">
-                                  <span className={`font-medium ${
-                                    content.metadata.engagement_prediction.engagement_level === 'High'
-                                      ? 'text-green-600'
-                                      : content.metadata.engagement_prediction.engagement_level === 'Medium'
-                                      ? 'text-yellow-600'
-                                      : 'text-blue-600'
-                                  }`}>
-                                    {content.metadata.engagement_prediction.engagement_level}
-                                  </span> engagement level
-                                </p>
-                              </div>
-                            </div>
-                          )}
+                              </AccordionContent>
+                            </AccordionItem>
+                            
+                            {/* Platform-specific insights, if available */}
+                            {content.metadata.insights && (
+                              <AccordionItem value="platform-insights" className="border border-gray-200 rounded-lg overflow-hidden">
+                                <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 border-b border-gray-200">
+                                  <div className="flex items-center gap-2 text-gray-800 font-medium">
+                                    <BarChart2 size={16} />
+                                    Platform Insights
+                                  </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="p-4 bg-white">
+                                  <div className="space-y-4">
+                                    {content.metadata.insights.key_themes && (
+                                      <div>
+                                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Key Themes</h4>
+                                        <ul className="list-disc pl-5 space-y-1">
+                                          {content.metadata.insights.key_themes.map((theme, i) => (
+                                            <li key={i} className="text-sm text-gray-800">{theme}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    
+                                    {content.metadata.insights.high_impact_moments && (
+                                      <div>
+                                        <h4 className="text-sm font-semibold text-gray-700 mb-2">High-Impact Moments</h4>
+                                        <ul className="list-disc pl-5 space-y-1">
+                                          {content.metadata.insights.high_impact_moments.map((moment, i) => (
+                                            <li key={i} className="text-sm text-gray-800">{moment}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            )}
+                          </Accordion>
                         </div>
                       </div>
                     </CardContent>

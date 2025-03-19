@@ -1,0 +1,25 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 10.377033333333333,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_091348.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_091408.jpg",
+  "creatives": {
+    "headline": "Uncover the Truth: Cambodia's Horrifying Past",
+    "description": "Join us as we delve into one of the most brutal and bloody revolutions in history. In 1975, the Khmer Rouge took over Cambodia, leading to the deaths of over 2 million people. Discover the stories of survivors like Bo Meng, and learn about the enigmatic figure Pol Pot. Don't miss this hard-hitting investigation.",
+    "call_to_action": "Watch now and share this video with your friends to spread awareness.",
+    "video_snippets": [
+      "Pol Pot: The Cambodian Nightmare",
+      "Surviving the Killing Fields: Bo Meng's Story"
+    ]
+  },
+  "job_id": "bd0e0bd4-0a39-415b-9c4c-a380f83c745b",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": [
+      "Shorter CTAs typically drive better conversion rates"
+    ]
+  }
+}

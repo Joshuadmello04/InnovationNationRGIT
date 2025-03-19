@@ -1,0 +1,15 @@
+{
+  "input_video": "XenCenter 2025-02-14 19-54-42.mp4",
+  "platforms_processed": [
+    "youtube_shorts"
+  ],
+  "job_id": "fb700879-5fe5-40ca-8a62-642e70bf83af",
+  "created_content": {
+    "youtube_shorts": {
+      "video_file": "youtube_shorts_20250319_085126.mp4",
+      "thumbnail_file": "youtube_shorts_20250319_085136.jpg",
+      "predicted_engagement": 75,
+      "engagement_level": "High"
+    }
+  }
+}
