@@ -1,0 +1,23 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 10.377033333333333,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_100940.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_101000.jpg",
+  "creatives": {
+    "headline": "Uncover the Dark Truth: Cambodia's Horror Story",
+    "description": "Witness the brutal reality of Cambodia's communist revolution, which claimed the lives of 25% of its population. Discover how Pol Pot's radical regime wiped out everything from money to toys, plunging the country into a new dark age. Hear firsthand accounts of survivors and learn how Paul Pot built over 100 concentration camps filled with unspeakable horrors. Don't miss this eye-opening video.",
+    "call_to_action": "Watch Now",
+    "video_snippets": [
+      "Pol Pot: The Most Radical, Bloodiest Revolution of the 20th Century",
+      "Cambodia's Darkest Hour: Uncovering the Truth"
+    ]
+  },
+  "job_id": "be05e142-30dd-4a32-bee4-de3511b23fa0",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": []
+  }
+}

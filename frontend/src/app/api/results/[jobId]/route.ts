@@ -13,11 +13,20 @@ interface Creatives {
   callToAction?: string;
 }
 
+interface Insights {
+  key_themes?: string[];
+  high_impact_moments?: string[];
+  audience_engagement_points?: string[];
+  content_performance_predictions?: string[];
+  generation_time?: string;
+} 
+
 interface EngagementPrediction {
   predicted_engagement: number;
   engagement_level: string;
 }
 
+// Modify the existing Metadata interface to include insights
 interface Metadata {
   platform?: string;
   timestamp?: number;
@@ -27,6 +36,7 @@ interface Metadata {
   thumbnail_file?: string;
   creatives?: Creatives;
   engagement_prediction?: EngagementPrediction;
+  insights?: Insights; // Add this line
   job_id?: string;
 }
 
@@ -50,7 +60,21 @@ async function readMetadataFile(metadataPath: string): Promise<Metadata | null> 
   try {
     if (existsSync(metadataPath)) {
       const data = await readFile(metadataPath, 'utf8');
-      return JSON.parse(data);
+      const parsedData = JSON.parse(data);
+      
+      // If insights are in a separate file, you might want to read them
+      const insightsPath = metadataPath.replace('.json', '_insights.json');
+      let insights: Insights | null = null;
+      
+      if (existsSync(insightsPath)) {
+        const insightsData = await readFile(insightsPath, 'utf8');
+        insights = JSON.parse(insightsData);
+      }
+
+      return {
+        ...parsedData,
+        insights: insights || parsedData.insights // Prioritize separate insights file
+      };
     }
   } catch (error) {
     console.error('Error reading metadata file:', error);
@@ -167,7 +191,8 @@ export async function GET(
                 engagement_prediction: metadata?.engagement_prediction || {
                   predicted_engagement: 75,
                   engagement_level: "High"
-                }
+                },
+                insights: metadata?.insights // This line adds insights to the response
               }
             });
           }

@@ -27,7 +27,7 @@ export default function Header() {
         <div className="flex items-center justify-between py-3">
           <div className="flex items-center">
             <Link href="/">
-              <span className="text-xl font-bold text-blue-600">VideoAI</span>
+              <span className="text-xl font-bold text-blue-600">Engage 360</span>
             </Link>
             <div className="hidden md:block ml-10">
               <div className="flex space-x-8">
