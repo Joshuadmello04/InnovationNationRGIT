@@ -1,0 +1,26 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 10.377033333333333,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_081928.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_081954.jpg",
+  "creatives": {
+    "headline": "Uncover the Shocking Truth: Cambodia's Deadliest Revolution",
+    "description": "Discover the harrowing tale of one of history's most brutal regimes. Witness firsthand the horrors inflicted by Pol Pot and the Khmer Rouge during their bloodiest revolution, resulting in the deaths of over 2 million people. Uncover the truth as we delve into this dark chapter of Cambodia's past.",
+    "call_to_action": "Watch now to unravel the mystery behind one of history's most haunting and enigmatic regimes.",
+    "video_snippets": [
+      "Experience the chilling aftermath of Pol Pot's takeover in this gripping video.",
+      "Explore the brutal tactics employed by the Khmer Rouge, including mass executions and forced labor camps."
+    ]
+  },
+  "job_id": "591c68bd-1695-4204-b653-831b16a85665",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": [
+      "Consider shortening your headline for better impact",
+      "Shorter CTAs typically drive better conversion rates"
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 10.377033333333333,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_074149.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_074213.jpg",
+  "creatives": {
+    "headline": "Uncovering the Truth: The Cambodian Genocide",
+    "description": "Join us as we explore the horrifying truth behind the Cambodian genocide committed by Pol Pot and his Khmer Rouge regime. Learn about their brutal tactics, the devastating impact on Cambodia's population, and how this tragedy remains largely unknown to the world today. Don't miss out on this important historical lesson - click now to learn more!",
+    "call_to_action": "Watch Now",
+    "video_snippets": [
+      "Pol Pot orders the evacuation of Phnom Penh and allows only what people can carry. This marks the beginning of a brutal four-year reign that claims millions of lives.",
+      "Paul Pot's revolutionary nom de guerre, Salah Sar, was once a student of radio electricity in Paris. Little did he know, his time there would lead him down a dark and deadly path."
+    ]
+  },
+  "job_id": "f40ca063-2c90-4a7f-b473-e80cb8352a52",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": []
+  }
+}

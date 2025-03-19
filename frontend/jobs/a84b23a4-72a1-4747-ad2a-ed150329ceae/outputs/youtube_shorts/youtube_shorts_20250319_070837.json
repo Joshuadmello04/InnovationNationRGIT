@@ -1,0 +1,25 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 10.377033333333333,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_070735.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_070837.jpg",
+  "creatives": {
+    "headline": "Uncover the Truth: The Dark Reign of Pol Pot",
+    "description": "Discover the horrifying reality behind the Cambodian communist revolution led by Pol Pot. Witness the brutal massacres, forced labor, and starvation that claimed millions of lives during his four-year reign. Don't miss this eye-opening expos\u00e9.",
+    "call_to_action": "Watch Now and Spread Awareness",
+    "video_snippets": [
+      "Pol Pot's Enigmatic Beginnings",
+      "The Cambodian Killing Fields: The Darkest Chapter"
+    ]
+  },
+  "job_id": "a84b23a4-72a1-4747-ad2a-ed150329ceae",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": [
+      "Shorter CTAs typically drive better conversion rates"
+    ]
+  }
+}

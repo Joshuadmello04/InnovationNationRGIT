@@ -1,0 +1,26 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 10.377033333333333,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_074154.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_074219.jpg",
+  "creatives": {
+    "headline": "Uncover the Shocking Truth About Pol Pot's Reign of Terror in Cambodia",
+    "description": "Learn about the brutal tactics used by Pol Pot, the enigmatic leader of Cambodia's communist revolution. Discover how he wiped out entire populations and eradicated basic human rights, leaving behind a trail of horror that still haunts the country today. But don't take our word for it - watch this video to unravel the chilling facts and hear firsthand accounts from survivors.",
+    "call_to_action": "Join us in spreading awareness about this atrocious chapter in history and help prevent such atrocities from happening again. Share this video with your friends and family and stand up against human rights violations.",
+    "video_snippets": [
+      "Watch as we delve into the archives to reveal never-before-seen footage of Pol Pot's inner circle, shedding light on his twisted ideology and brutal methods. Get a glimpse into the daily life of ordinary Cambodians under his rule, struggling to survive in a world turned upside down.",
+      "Listen as survivors share their chilling accounts of survival in Pol Pot's killing fields. Their stories are a testament to the resilience of the human spirit and serve as a reminder of the horrors that can result from extreme ideology."
+    ]
+  },
+  "job_id": "a019420b-be9f-475c-8fb4-21732821518d",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": [
+      "Consider shortening your headline for better impact",
+      "Shorter CTAs typically drive better conversion rates"
+    ]
+  }
+}

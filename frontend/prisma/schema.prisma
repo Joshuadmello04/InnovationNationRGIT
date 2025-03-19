@@ -24,7 +24,7 @@ model User {
 
 model Job {
   id                String    @id @default(uuid())
-  userId            String    @map("user_id")
+  userId            String?   @map("user_id") // Add the question mark to make it optional
   originalVideoName String    @map("original_video_name")
   originalVideoPath String    @map("original_video_path")
   status            JobStatus @default(QUEUED)
@@ -33,7 +33,7 @@ model Job {
   createdAt         DateTime  @default(now()) @map("created_at")
   startedAt         DateTime? @map("started_at")
   completedAt       DateTime? @map("completed_at")
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User?     @relation(fields: [userId], references: [id], onDelete: SetNull) // Change to optional
   contents          Content[]
 
   @@map("jobs")

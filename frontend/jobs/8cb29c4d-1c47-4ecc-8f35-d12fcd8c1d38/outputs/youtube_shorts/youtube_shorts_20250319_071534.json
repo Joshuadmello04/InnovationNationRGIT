@@ -1,0 +1,26 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 10.377033333333333,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_071515.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_071534.jpg",
+  "creatives": {
+    "headline": "Uncover the Truth: The Bloody Reign of Pol Pot",
+    "description": "Discover the atrocities committed by Cambodia's communist leader, Pol Pot. Witness the horrifying consequences of his radical revolution and learn about the tragic fate of millions of innocent lives. Join us in demanding justice for the victims and raising awareness of this dark chapter in history.",
+    "call_to_action": "Watch now to uncover the truth behind one of the bloodiest revolutions of the 20th century.",
+    "video_snippets": [
+      "Pol Pot's rise to power and the chaos that ensued",
+      "The brutal tactics employed by Pol Pot's Khmer Rouge regime",
+      "Survivor accounts of life in Cambodia under Pol Pot's reign"
+    ]
+  },
+  "job_id": "8cb29c4d-1c47-4ecc-8f35-d12fcd8c1d38",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": [
+      "Shorter CTAs typically drive better conversion rates"
+    ]
+  }
+}

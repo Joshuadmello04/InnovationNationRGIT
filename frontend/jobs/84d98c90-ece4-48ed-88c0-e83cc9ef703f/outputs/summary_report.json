@@ -1,0 +1,15 @@
+{
+  "input_video": "your_video.mp4",
+  "platforms_processed": [
+    "youtube_shorts"
+  ],
+  "job_id": "84d98c90-ece4-48ed-88c0-e83cc9ef703f",
+  "created_content": {
+    "youtube_shorts": {
+      "video_file": "youtube_shorts_20250319_072645.mp4",
+      "thumbnail_file": "youtube_shorts_20250319_072704.jpg",
+      "predicted_engagement": 75,
+      "engagement_level": "High"
+    }
+  }
+}

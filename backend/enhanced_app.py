@@ -8,9 +8,13 @@ different platforms including YouTube Shorts, YouTube Ads, Display Ads, and Perf
 """
 
 import os
+import sys
 import argparse
 import time
 import json
+
+# Ensure the script can find modules
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import our modules
 from modules.transcription import transcribe_video
@@ -19,7 +23,7 @@ from modules.insights import generate_insights, generate_ad_creatives
 from modules.content import create_youtube_short, create_ad_video, generate_thumbnail
 from modules.utils import ensure_dir, save_metadata, generate_output_filename, predict_engagement
 
-# Define output directories
+# Define output directories BEFORE main function
 OUTPUT_DIR = "outputs"
 PLATFORM_DIRS = {
     "youtube_shorts": os.path.join(OUTPUT_DIR, "youtube_shorts"),
@@ -48,17 +52,28 @@ PLATFORM_SETTINGS = {
     }
 }
 
-def process_video(video_path, platforms=None):
+def process_video(video_path, platforms=None, job_id=None, output_dir=None):
     """
     Process a video to create content for different platforms.
     
     Parameters:
     - video_path: Path to the input video
     - platforms: List of platforms to generate content for (default: all platforms)
+    - job_id: Optional job identifier
+    - output_dir: Optional custom output directory
     
     Returns:
     - Dictionary with results for each platform
     """
+    # Use custom output directory if provided
+    global OUTPUT_DIR, PLATFORM_DIRS
+    if output_dir:
+        OUTPUT_DIR = output_dir
+        PLATFORM_DIRS = {
+            platform: os.path.join(OUTPUT_DIR, platform)
+            for platform in PLATFORM_DIRS
+        }
+
     # Create output directories
     for directory in PLATFORM_DIRS.values():
         ensure_dir(directory)
@@ -72,7 +87,8 @@ def process_video(video_path, platforms=None):
     print("\n1. Transcribing video...")
     start_time = time.time()
     transcript = transcribe_video(video_path)
-    print(f"✓ Transcription completed in {time.time() - start_time:.1f} seconds")
+    # Changed Unicode checkmark to "+" to avoid encoding issues
+    print(f"+ Transcription completed in {time.time() - start_time:.1f} seconds")
     print(f"  Transcript length: {len(transcript)} characters")
     
     # Step 2: Find engaging moments
@@ -80,7 +96,8 @@ def process_video(video_path, platforms=None):
     start_time = time.time()
     engaging_moments = find_engaging_moments(video_path, top_n=5)
     timestamps = frames_to_timestamps(engaging_moments, video_path)
-    print(f"✓ Video analysis completed in {time.time() - start_time:.1f} seconds")
+    # Changed Unicode checkmark to "+" to avoid encoding issues
+    print(f"+ Video analysis completed in {time.time() - start_time:.1f} seconds")
     print(f"  Found {len(timestamps)} engaging moments:")
     for i, ts in enumerate(timestamps):
         print(f"  - Moment {i+1}: {ts:.2f}s")
@@ -90,7 +107,8 @@ def process_video(video_path, platforms=None):
     start_time = time.time()
     insights = generate_insights(transcript)
     print(insights)
-    print(f"✓ Insights generated in {time.time() - start_time:.1f} seconds")
+    # Changed Unicode checkmark to "+" to avoid encoding issues
+    print(f"+ Insights generated in {time.time() - start_time:.1f} seconds")
     
     # Step 4: Process for each platform
     for platform in platforms:
@@ -145,7 +163,8 @@ def process_video(video_path, platforms=None):
             "aspect_ratio": settings["aspect_ratio"],
             "video_file": output_filename,
             "thumbnail_file": thumbnail_filename,
-            "creatives": ad_creatives
+            "creatives": ad_creatives,
+            "job_id": job_id  # Include job_id in metadata
         }
         
         # Add engagement prediction
@@ -159,7 +178,8 @@ def process_video(video_path, platforms=None):
         metadata_path = os.path.join(output_dir, metadata_filename)
         save_metadata(metadata, metadata_path)
         
-        print(f"✓ {platform} content created in {time.time() - start_time:.1f} seconds")
+        # Changed Unicode checkmark to "+" to avoid encoding issues
+        print(f"+ {platform} content created in {time.time() - start_time:.1f} seconds")
         print(f"  - Video: {output_filename}")
         print(f"  - Thumbnail: {thumbnail_filename}")
         print(f"  - Metadata: {metadata_filename}")
@@ -178,6 +198,7 @@ def process_video(video_path, platforms=None):
     summary = {
         "input_video": os.path.basename(video_path),
         "platforms_processed": platforms,
+        "job_id": job_id,  # Include job_id in summary
         "created_content": {}
     }
     
@@ -195,40 +216,32 @@ def process_video(video_path, platforms=None):
     with open(summary_path, 'w') as f:
         json.dump(summary, f, indent=2)
     
-    print(f"✓ Summary report saved to {summary_path}")
+    # Changed Unicode checkmark to "+" to avoid encoding issues
+    print(f"+ Summary report saved to {summary_path}")
     print("\nContent creation completed successfully!")
     
     return results
 
 def main():
-    """
-    Main entry point for the application.
-    Parses command line arguments and processes the video.
-    """
-    # Declare globals at the beginning of the function
-    global OUTPUT_DIR
-    global PLATFORM_DIRS
-    
     parser = argparse.ArgumentParser(description="AI-driven YouTube content creator")
     parser.add_argument("video", help="Path to the input video file")
     parser.add_argument("--platforms", nargs="+", 
                         choices=list(PLATFORM_DIRS.keys()),
+                        default=list(PLATFORM_DIRS.keys()),
                         help="Platforms to generate content for (default: all platforms)")
     parser.add_argument("--output", default=OUTPUT_DIR, 
                         help=f"Output directory (default: {OUTPUT_DIR})")
+    parser.add_argument("--job_id", help="Job ID for tracking")
     
     args = parser.parse_args()
     
-    # Now you can modify the global variables
-    if args.output != OUTPUT_DIR:
-        OUTPUT_DIR = args.output
-        PLATFORM_DIRS = {
-            platform: os.path.join(OUTPUT_DIR, platform)
-            for platform in PLATFORM_DIRS
-        }
-    
-    # Process the video
-    process_video(args.video, args.platforms)
+    # Process the video with all arguments
+    process_video(
+        args.video, 
+        platforms=args.platforms, 
+        job_id=args.job_id, 
+        output_dir=args.output
+    )
 
 if __name__ == "__main__":
     main()

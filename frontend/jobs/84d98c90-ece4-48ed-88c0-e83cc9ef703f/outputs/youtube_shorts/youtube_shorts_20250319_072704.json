@@ -1,0 +1,23 @@
+{
+  "platform": "youtube_shorts",
+  "timestamp": 10.377033333333333,
+  "duration": 60,
+  "aspect_ratio": "9:16",
+  "video_file": "youtube_shorts_20250319_072645.mp4",
+  "thumbnail_file": "youtube_shorts_20250319_072704.jpg",
+  "creatives": {
+    "headline": "Uncover the Truth: Cambodian Genocide by Pol Pot",
+    "description": "Learn about one of the most brutal revolutions in history, led by Pol Pot. Discover how this enigmatic figure and his Cambodian communist party ordered the evacuation of an entire city and resulted in the deaths of 2 million people during their four years in power. Witness the shocking footage of this atrocity and find out what happened after Vietnam invaded in 1978.",
+    "call_to_action": "Watch Now",
+    "video_snippets": [
+      "Footage of Pol Pot addressing his troops",
+      "Interviews with survivors sharing their harrowing experiences during the genocide"
+    ]
+  },
+  "job_id": "84d98c90-ece4-48ed-88c0-e83cc9ef703f",
+  "engagement_prediction": {
+    "predicted_engagement": 75,
+    "engagement_level": "High",
+    "suggestions": []
+  }
+}
